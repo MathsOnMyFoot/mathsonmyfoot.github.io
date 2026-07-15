@@ -253,7 +253,10 @@ authForgotLink.addEventListener("click", async () => {
 });
 
 // LOG OUT MF!!
-logoutBtn.addEventListener("click", () => signOut(auth));
+logoutBtn.addEventListener("click", () => {
+    signOut(auth);
+    location.reload();
+});
 
 // NAVIGATION & GENERAL ACTIONS
 startBtn.addEventListener("click", runGameInit);
