@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"
+    />
+    <meta name="theme-color" content="rgb(0, 221, 110)" />
+    <meta name="description" content="A minimalistic online mental maths game by Dwijottam Dutta. Play the game and compete with people globally!">
+    <title>MathsOnMyFoot by dwijottam</title>
+    <link rel="stylesheet" href="./style/index.css" />
+    <link rel="stylesheet" href="./style/media-query.css" />
+</head>
+
+<body>
+    <div class="container">
+
+        <!-- SIGN UP/LOGIN CARD IS HERE -->
+        <div id="auth-screen" class="card">
+            <h1 id="auth-title">Create Account</h1>
+            <p id="auth-desc" style="color: var(--text-muted); margin-bottom: 20px; margin-top: 3px">
+                on <b>MathsOnMyFoot</b> to play and score globally!
+            </p>
+
+            
+            <input type="text" id="auth-username" placeholder="Username (Display Name)" maxlength="15" />
+            <input type="email" id="auth-email" placeholder="Email Address" required />
+            <input type="password" id="auth-password" placeholder="Password" required minlength="6" />
+            
+            <button id="auth-submit-btn">Sign Up</button>
+            <p style="margin-top: 8px; font-size: 0.9rem; color: var(--text-muted)">
+                <span id="auth-toggle-text">Already have an account?</span>
+                <span id="auth-toggle-link" class="toggle-link">Login</span>
+            </p>
+            <p id="forgot-password-container" class="hidden"
+                style="text-align: center; margin-top: -10px; margin-top: 5px">
+                <span id="auth-forgot-link" class="toggle-link"
+                    style="font-size: 0.85rem; color: var(--text-muted)">Forgot Password?</span>
+            </p>
+            <marquee></marquee>
+        </div>
+
+        <!-- PLAYER MENU CARD IS HERE -->
+        <div id="start-screen" style="position: relative;" class="card hidden">
+            <h1 style="margin-top: 10px; font-size: 1.6rem;">
+                Hey,
+                <span id="welcome-username">Player</span>!!
+            </h1>
+            <p style="color: var(--text-muted); margin-bottom: 45px; margin-top: 7px;">
+                Total Attempts Played:
+                <strong id="stats-games-played" style="color: #000">0</strong>
+            </p>
+            <button id="start-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M17 4C20.3137 4 23 6.68629 23 10V14C23 17.3137 20.3137 20 17 20H7C3.68629 20 1 17.3137 1 14V10C1 6.68629 3.68629 4 7 4H17ZM17 6H7C4.8578 6 3.10892 7.68397 3.0049 9.80036L3 10V14C3 16.1422 4.68397 17.8911 6.80036 17.9951L7 18H17C19.1422 18 20.8911 16.316 20.9951 14.1996L21 14V10C21 7.8578 19.316 6.10892 17.1996 6.0049L17 6ZM10 9V11H12V13H9.999L10 15H8L7.999 13H6V11H8V9H10ZM18 13V15H16V13H18ZM16 9V11H14V9H16Z"></path></svg>
+
+                Play</button>
+            <button id="view-leaderboard-btn" class="btn-secondary">
+                🏆 View Leaderboard
+            </button>
+            <button id="logout-btn" class="back-btn" style="border-color: transparent">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M7.82843 10.9999H20V12.9999H7.82843L13.1924 18.3638L11.7782 19.778L4 11.9999L11.7782 4.22168L13.1924 5.63589L7.82843 10.9999Z"></path></svg>
+            </button>
+        </div>
+
+
+        <!-- LEADERBOARD CARD TO BE SHOWN IS HERE -->
+        <div id="view-leaderboard-screen" style="position: relative;" class="card hidden">
+            <h1 style="padding-top: 30px;">🏆 Leaderboard 🏆</h1>
+            <p style="
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 15px;">
+                💡 Click a player's name to view their profile stats.
+            </p>
+            <ul id="standalone-leaderboard-list" class="leaderboard-list"></ul>
+            <button id="back-to-menu-btn" class="back-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M7.82843 10.9999H20V12.9999H7.82843L13.1924 18.3638L11.7782 19.778L4 11.9999L11.7782 4.22168L13.1924 5.63589L7.82843 10.9999Z"></path></svg>
+            </button>
+        </div>
+
+
+        <!-- PROFILE CARD MENU CARD -->
+        <div id="profile-viewer-screen" style="position: relative;" class="card hidden">
+            <div style="font-size: 3.5rem; margin-bottom: 10px">👤</div>
+            <h2 id="profile-name" style="color: var(--accent); margin-bottom: 5px">
+                Player Name
+            </h2>
+            <p id="profile-uid-text" style="font-size: 0.75rem;color: var(--text-muted);margin-bottom: 25px;word-break: break-all;">ID: -</p>
+
+            <div style="background-color: transparent;border-radius: 12px;padding: 15px;margin-bottom: 25px;text-align: left;">
+                <div style="display: flex;justify-content: space-between;margin-bottom: 8px;">
+                    <span style="color: var(--text-muted)">Total Attempts Played:</span>
+                    <strong id="profile-games-played" style="color: var(--text-main)">0</strong>
+                </div>
+                <div style="display: flex;justify-content: space-between;margin-bottom: 8px;">
+                    <span style="color: var(--text-muted)">Highest Score:</span>
+                    <strong id="profile-highest-score" style="color: var(--text-main)">0</strong>
+                </div>
+                <div style="display: flex;justify-content: space-between;align-items: center;margin-bottom: 8px;">
+                    <span style="color: var(--text-muted)">Last active:</span>
+                    <strong id="profile-timestamp" style="color: var(--text-main); font-size: 0.75rem; vertical-align: middle;">Never played</strong>
+                </div>
+            </div>
+            <button id="profile-close-btn" class="back-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M7.82843 10.9999H20V12.9999H7.82843L13.1924 18.3638L11.7782 19.778L4 11.9999L11.7782 4.22168L13.1924 5.63589L7.82843 10.9999Z"></path></svg>
+            </button>
+        </div>
+
+
+        <!-- GAME CARD IS HERE -->
+        <div id="game-screen" class="card hidden">
+            <div class="hud">
+                <span>Score: <strong id="score-val">0</strong></span>
+                <span>Time Left: <strong id="timer-val">10s</strong></span>
+            </div>
+            <div class="timer-bar-container">
+                <div id="timer-bar"></div>
+            </div>
+            <div class="equation" id="equation-display">Loading...</div>
+            <div id="options-container" class="options-grid"></div>
+        </div>
+
+        <div id="leaderboard-screen" style="position: relative; padding-bottom: 10px;" class="card hidden">
+            <h1 style="color: var(--danger); font-size: 40px;">Game Over!</h1>
+            <p style="display: flex; text-align: center; vertical-align: middle; justify-content: center; align-items: center; margin-bottom: 20px; font-size: 1.1rem; color: var(--text-muted);">
+                Your Final Score: &nbsp;
+                <strong id="final-score" style="font-size: 1.5rem; color: var(--text-main)">0</strong>
+            </p>
+
+            <h1>🏆 Leaderboard 🏆</h1>
+            <p style="
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 15px;">
+                💡 Click a player's name to view their profile stats.
+            </p>
+            <ul id="gameover-leaderboard-list" class="leaderboard-list"></ul>
+
+            <button id="restart-btn">Play Again</button>
+            <button id="exit-btn" class="back-btn" style="border-color: transparent">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M7.82843 10.9999H20V12.9999H7.82843L13.1924 18.3638L11.7782 19.778L4 11.9999L11.7782 4.22168L13.1924 5.63589L7.82843 10.9999Z"></path></svg>
+            </button>
+        </div>
+
+        <footer>Developed by <a href="https://dwijottam-dutta.github.io" style="color: #00dd6e; text-decoration: underline;" target="_blank">@dwijottam</a></footer>
+
+    </div>
+
+    <script src="./js/lib/confetti.js"></script>
+    <script type="module" src="./js/index.js"></script>
+</body>
+
+</html>
