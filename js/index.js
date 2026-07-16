@@ -285,8 +285,8 @@ function gameENGINE() {
   let num1, num2, num3;
     let operator1, operator2;
     
-    if (score <= 7) {
-        // TIER 1: Warmup (Scores 0 to 7) -- Basic Addition/Subtraction, Single Digit Multiplication
+    if (score <= 10) {
+        // TIER 1: Warmup (Scores 0 to 10) -- Basic Addition/Subtraction, Single Digit Multiplication
         const ops = ['+', '-', '*'];
         operator1 = ops[Math.floor(Math.random() * ops.length)];
         
@@ -307,8 +307,8 @@ function gameENGINE() {
             equationDisplay.innerText = `${num1} × ${num2}`;
         }
         
-    } else if (score <= 22) {
-        // TIER 2: Heat-Up (Scores 7 to 22) -- Larger Numbers, Division Joins, Triple-Digit Additions
+    } else if (score <= 25) {
+        // TIER 2: Heat-Up (Scores 11 to 25) -- Larger Numbers, Division Joins, Triple-Digit Additions
         const ops = ['+', '-', '*', '/'];
         operator1 = ops[Math.floor(Math.random() * ops.length)];
         
@@ -339,61 +339,52 @@ function gameENGINE() {
         }
         
     } else if (score <= 35) {
-        // TIER 3: The Wall (Scores 22 to 35) -- Serious Double Digit Multiplication, Complex Division, 3-Term Addition
-        const subTiers = ['3term_add_sub', 'hard_mult', 'hard_div'];
+        // TIER 3: Arcade Rush (Scores 13 to 22) - Toned down & engaging
+        const subTiers = ['3term_singles', 'casual_mult', 'casual_div'];
         const chosenType = subTiers[Math.floor(Math.random() * subTiers.length)];
         
-        if (chosenType === '3term_add_sub') {
-            num1 = Math.floor(Math.random() * 50) + 10;
-            num2 = Math.floor(Math.random() * 40) + 10;
-            num3 = Math.floor(Math.random() * 30) + 5;
+        if (chosenType === '3term_singles') {
+            // Three terms, heavy focus on single digits for instinctual math (e.g. 7 + 8 - 4)
+            num1 = Math.floor(Math.random() * 9) + 2; // 2 to 10
+            num2 = Math.floor(Math.random() * 9) + 2;
+            num3 = Math.floor(Math.random() * 9) + 2;
             
             operator1 = Math.random() < 0.5 ? '+' : '-';
             operator2 = Math.random() < 0.5 ? '+' : '-';
             
             let intermediate = operator1 === '+' ? num1 + num2 : num1 - num2;
             if (operator2 === '-' && intermediate < num3) {
-                operator2 = '+';
+                operator2 = '+'; // Keep it positive and friendly
             }
             currentAnswer = operator2 === '+' ? intermediate + num3 : intermediate - num3;
             equationDisplay.innerText = `${num1} ${operator1} ${num2} ${operator2} ${num3}`;
             
-        } else if (chosenType === 'hard_mult') {
-            num1 = Math.floor(Math.random() * 14) + 12; // 12 to 25
-            num2 = Math.floor(Math.random() * 11) + 5;  // 5 to 15
+        } else if (chosenType === 'casual_mult') {
+            // Multiplication with recognizable factors (e.g. 12 x 5, 15 x 3, 25 x 2)
+            const friendlyBases = [11, 12, 13, 14, 15, 20, 25];
+            num1 = friendlyBases[Math.floor(Math.random() * friendlyBases.length)];
+            num2 = Math.floor(Math.random() * 4) + 2; // Multipliers: 2 to 5
             currentAnswer = num1 * num2;
             equationDisplay.innerText = `${num1} × ${num2}`;
             
         } else {
-            num2 = Math.floor(Math.random() * 13) + 6; // Divisor: 6 to 18
-            currentAnswer = Math.floor(Math.random() * 15) + 5; // Quotient: 5 to 19
+            // Recognizable division tables (e.g. 72 ÷ 8, 60 ÷ 5)
+            num2 = Math.floor(Math.random() * 7) + 4;          // Divisor: 4 to 10
+            currentAnswer = Math.floor(Math.random() * 7) + 5; // Answer: 5 to 11
             num1 = num2 * currentAnswer;
             equationDisplay.innerText = `${num1} ÷ ${num2}`;
         }
         
     } else {
-        // TIER 4: Gods of Math (Scores 35+) -- Extremely hard operations, lightning fast combinations
-        const subTiers = ['heavy_mult', '3term_mix', 'god_div'];
+        // TIER 4: Ultimate Flow State (Scores 23+) - Pure speed, no homework math
+        const subTiers = ['3term_mix', 'tier2_mix', 'tier3_mix'];
         const chosenType = subTiers[Math.floor(Math.random() * subTiers.length)];
-
-        // YOU ARE A PRO PLAYER
-        confetti.start();
-        document.querySelector("footer").innerHTML = "Fabulous! Maths On Your Foot!! ;)";
-        setTimeout(function () {
-            confetti.stop();
-            document.querySelector("footer").innerHTML = `Developed by <a href="https://dwijottam-dutta.github.io" style="color: #00dd6e; text-decoration: underline;" target="_blank">@dwijottam</a>`
-        }, 5000);
         
-        if (chosenType === 'heavy_mult') {
-            num1 = Math.floor(Math.random() * 21) + 15; // 15 to 35
-            num2 = Math.floor(Math.random() * 11) + 11; // 11 to 21
-            currentAnswer = num1 * num2;
-            equationDisplay.innerText = `${num1} × ${num2}`;
-            
-        } else if (chosenType === '3term_mix') {
-            num1 = Math.floor(Math.random() * 10) + 4; // 4 to 13
-            num2 = Math.floor(Math.random() * 8) + 3;  // 3 to 10
-            num3 = Math.floor(Math.random() * 50) + 5;
+        if (chosenType === '3term_mix') {
+            // Mixed 3-term arithmetic using smooth values (e.g. 2 x 5 + 7)
+            num1 = Math.floor(Math.random() * 7) + 2; // 2 to 8
+            num2 = Math.floor(Math.random() * 5) + 2; // 2 to 6
+            num3 = Math.floor(Math.random() * 15) + 2;
             
             operator1 = Math.random() < 0.5 ? '+' : '-';
             let product = num1 * num2;
@@ -404,11 +395,35 @@ function gameENGINE() {
             currentAnswer = operator1 === '+' ? product + num3 : product - num3;
             equationDisplay.innerText = `(${num1} × ${num2}) ${operator1} ${num3}`;
             
+        } else if (chosenType === 'tier2_mix') {
+            // Bring back fast-paced addition/subtraction from Tier 2
+            const ops = ['+', '-'];
+            operator1 = ops[Math.floor(Math.random() * ops.length)];
+            if (operator1 === '+') {
+                num1 = Math.floor(Math.random() * 60) + 20;
+                num2 = Math.floor(Math.random() * 60) + 20;
+                currentAnswer = num1 + num2;
+                equationDisplay.innerText = `${num1} + ${num2}`;
+            } else {
+                num1 = Math.floor(Math.random() * 90) + 20;
+                num2 = Math.floor(Math.random() * (num1 - 10)) + 5;
+                currentAnswer = num1 - num2;
+                equationDisplay.innerText = `${num1} - ${num2}`;
+            }
         } else {
-            num2 = Math.floor(Math.random() * 16) + 12; // Divisor: 12 to 27
-            currentAnswer = Math.floor(Math.random() * 21) + 11; // Quotient: 11 to 31
-            num1 = num2 * currentAnswer;
-            equationDisplay.innerText = `${num1} ÷ ${num2}`;
+            // Bring back the snappy 3-term single digits or friendly tables from Tier 3
+            if (Math.random() < 0.5) {
+                num1 = Math.floor(Math.random() * 9) + 2;
+                num2 = Math.floor(Math.random() * 9) + 2;
+                num3 = Math.floor(Math.random() * 9) + 2;
+                currentAnswer = num1 + num2 + num3;
+                equationDisplay.innerText = `${num1} + ${num2} + ${num3}`;
+            } else {
+                num2 = Math.floor(Math.random() * 6) + 4; // 4 to 9
+                currentAnswer = Math.floor(Math.random() * 7) + 4; // 4 to 10
+                num1 = num2 * currentAnswer;
+                equationDisplay.innerText = `${num1} ÷ ${num2}`;
+            }
         }
     }
 }
@@ -475,10 +490,10 @@ function resetTimer() {
         adaptiveTimeLimit = 10.0;
     } else if (score <= 35) {
         // Tier 3
-        adaptiveTimeLimit = 17.0; 
+        adaptiveTimeLimit = 15.0; 
     } else {
         // Tier 4
-        adaptiveTimeLimit = 22.0;
+        adaptiveTimeLimit = 17.0;
     }
 
     timeLeft = adaptiveTimeLimit;
