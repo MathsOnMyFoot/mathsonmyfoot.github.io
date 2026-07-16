@@ -1,17 +1,37 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile, signOut, onAuthStateChanged, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { getDatabase, ref, push, set, query, orderByChild, limitToLast, get, startAt, runTransaction, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
-
+import {
+    getAuth,
+    createUserWithEmailAndPassword,
+    signInWithEmailAndPassword,
+    updateProfile,
+    signOut,
+    onAuthStateChanged,
+    sendPasswordResetEmail,
+} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import {
+    getDatabase,
+    ref,
+    push,
+    set,
+    query,
+    orderByChild,
+    limitToLast,
+    get,
+    startAt,
+    runTransaction,
+    onValue,
+} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBaDnTQU4C9BvNbJS29g0SXnil3MhmxJjs",
-  authDomain: "mathcharm-1aaa4.firebaseapp.com",
-  databaseURL: "https://mathcharm-1aaa4-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "mathcharm-1aaa4",
-  storageBucket: "mathcharm-1aaa4.firebasestorage.app",
-  messagingSenderId: "841601034536",
-  appId: "1:841601034536:web:c8aff465474012a34a481d",
-  measurementId: "G-6ELN78VR0G",
+    apiKey: "AIzaSyBaDnTQU4C9BvNbJS29g0SXnil3MhmxJjs",
+    authDomain: "mathcharm-1aaa4.firebaseapp.com",
+    databaseURL:
+        "https://mathcharm-1aaa4-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "mathcharm-1aaa4",
+    storageBucket: "mathcharm-1aaa4.firebasestorage.app",
+    messagingSenderId: "841601034536",
+    appId: "1:841601034536:web:c8aff465474012a34a481d",
+    measurementId: "G-6ELN78VR0G",
 };
 
 // Initialize Firebase
@@ -28,19 +48,24 @@ let timeLeft = 10;
 const TIME_LIMIT = 10;
 let isSignUpMode = true;
 let previousScreenBeforeProfile = null;
-const gameover = new Audio('../audio/gameover.mp3');
+let isGameActive = false;
+const gameover = new Audio("../audio/gameover.mp3");
 
 // Elements
 const authScreen = document.getElementById("auth-screen");
 const startScreen = document.getElementById("start-screen");
-const viewLeaderboardScreen = document.getElementById("view-leaderboard-screen");
+const viewLeaderboardScreen = document.getElementById(
+    "view-leaderboard-screen",
+);
 const profileViewerScreen = document.getElementById("profile-viewer-screen");
 const gameScreen = document.getElementById("game-screen");
 const leaderboardScreen = document.getElementById("leaderboard-screen");
 
 const authTitle = document.getElementById("auth-title");
 const authDesc = document.getElementById("auth-desc");
-const forgotPasswordContainer = document.getElementById("forgot-password-container");
+const forgotPasswordContainer = document.getElementById(
+    "forgot-password-container",
+);
 const authForgotLink = document.getElementById("auth-forgot-link");
 const authUsername = document.getElementById("auth-username");
 const authEmail = document.getElementById("auth-email");
@@ -71,186 +96,195 @@ const equationDisplay = document.getElementById("equation-display");
 const optionsContainer = document.getElementById("options-container");
 const finalScore = document.getElementById("final-score");
 
-const standaloneLeaderboardList = document.getElementById("standalone-leaderboard-list");
-const gameoverLeaderboardList = document.getElementById("gameover-leaderboard-list");
+const standaloneLeaderboardList = document.getElementById(
+    "standalone-leaderboard-list",
+);
+const gameoverLeaderboardList = document.getElementById(
+    "gameover-leaderboard-list",
+);
 
 const restartBtn = document.getElementById("restart-btn");
 const exitBtn = document.getElementById("exit-btn");
 
-
-
-
 // *** AUTHENTICATION STATE OBSERVER ***
 onAuthStateChanged(auth, (user) => {
-  if (user) {
-    currentUser = user;
-    welcomeUsername.innerText = user.displayName || "Anonymous";
+    if (user) {
+        currentUser = user;
+        welcomeUsername.innerText = user.displayName || "Anonymous";
 
-    // Show Start Screen and Hide Auth Screen
-    blitScreen(startScreen);
+        // Show Start Screen and Hide Auth Screen
+        blitScreen(startScreen);
 
-    // Show Runs Played Stats
-    const userStatsRef = ref(db, `users/${currentUser.uid}/gamesPlayed`);
+        // Show Runs Played Stats
+        const userStatsRef = ref(db, `users/${currentUser.uid}/gamesPlayed`);
 
-    // This listens to changes continuously and does not need async/await
-    onValue(userStatsRef, (snapshot) => {
-        if (snapshot.exists()) {
-            statsGamesPlayed.innerText = snapshot.val();
-        } else {
-            statsGamesPlayed.innerText = "0";
-        }
-
-    }, (error) => {
-        console.error("Listener failed:", error);
-    });
-  } else {
-    currentUser = null;
-    blitScreen(authScreen);
-
-
-    // Showing LeaderBoard Top Player in the Auth Banner
-    const leaderboardRef = ref(db, 'leaderboard');
-    // Query the single highest score
-    const topScoreQuery = query(leaderboardRef, orderByChild('score'), limitToLast(1));
-    onValue(topScoreQuery, (snapshot) => {
-        try {
-            if (snapshot.exists()) {
-                let topPlayer = null;
-                
-                // Loop runs exactly once because limitToLast(1) returns a single child
-                snapshot.forEach((childSnapshot) => {
-                    topPlayer = childSnapshot.val();
-                });
-
-                if (topPlayer) {
-                    authTopPlayerDiv.innerHTML = `🏆 <strong>${topPlayer.name}</strong> is leading the game with <strong>${topPlayer.score}</strong> points! &nbsp; | &nbsp; <b>Be the next one to Rock!!</b> 🫵`;
-                    authTopPlayerDiv.style.display = "block";
+        // This listens to changes continuously and does not need async/await
+        onValue(
+            userStatsRef,
+            (snapshot) => {
+                if (snapshot.exists()) {
+                    statsGamesPlayed.innerText = snapshot.val();
+                } else {
+                    statsGamesPlayed.innerText = "0";
                 }
-            } else {
+            },
+            (error) => {
+                console.error("Listener failed:", error);
+            },
+        );
+    } else {
+        currentUser = null;
+        blitScreen(authScreen);
+
+        // Showing LeaderBoard Top Player in the Auth Banner
+        const leaderboardRef = ref(db, "leaderboard");
+        // Query the single highest score
+        const topScoreQuery = query(
+            leaderboardRef,
+            orderByChild("score"),
+            limitToLast(1),
+        );
+        onValue(
+            topScoreQuery,
+            (snapshot) => {
+                try {
+                    if (snapshot.exists()) {
+                        let topPlayer = null;
+
+                        // Loop runs exactly once because limitToLast(1) returns a single child
+                        snapshot.forEach((childSnapshot) => {
+                            topPlayer = childSnapshot.val();
+                        });
+
+                        if (topPlayer) {
+                            authTopPlayerDiv.innerHTML = `🏆 <strong>${topPlayer.name}</strong> is leading the game with <strong>${topPlayer.score}</strong> points! &nbsp; | &nbsp; <b>Be the next one to Rock!!</b> 🫵`;
+                            authTopPlayerDiv.style.display = "block";
+                        }
+                    } else {
+                        authTopPlayerDiv.style.display = "none";
+                    }
+                } catch (e) {
+                    console.error("Error processing top player data:", e);
+                    authTopPlayerDiv.style.display = "none";
+                }
+            },
+            (error) => {
+                console.error("Error fetching top player for auth banner:", error);
                 authTopPlayerDiv.style.display = "none";
-            }
-        } catch (e) {
-            console.error("Error processing top player data:", e);
-            authTopPlayerDiv.style.display = "none";
-        }
-    }, (error) => {
-        console.error("Error fetching top player for auth banner:", error);
-        authTopPlayerDiv.style.display = "none";
-    });
-
-
-
-
-  }
+            },
+        );
+    }
 });
-
 
 // --- PROFILE VIEW LOGIC ---
 async function openUserProfileCard(uid, displayName, originScreen) {
-  previousScreenBeforeProfile = originScreen;
-  blitScreen(profileViewerScreen);
+    previousScreenBeforeProfile = originScreen;
+    blitScreen(profileViewerScreen);
 
-  profileName.innerText = displayName;
-  profileUidText.innerText = `ID: ${uid}`;
-  profileGamesPlayed.innerText = "Loading...";
+    profileName.innerText = displayName;
+    profileUidText.innerText = `ID: ${uid}`;
+    profileGamesPlayed.innerText = "Loading...";
 
-  try {
-    const targetUserStatsRef = ref(db, `users/${uid}/gamesPlayed`);
-    const targetUserLedStatsRef = ref(db, `leaderboard/${uid}`);
-    const snapshot = await get(targetUserStatsRef);
-    const snapshot_led = await get(targetUserLedStatsRef);
-    if (snapshot.exists() && snapshot_led.exists()) {
-      profileGamesPlayed.innerText = snapshot.val();
-      profileHighestScore.innerText = snapshot_led.val().score;
-      profileTimestamp.innerText = new Date(snapshot_led.val().timestamp).toLocaleString();
-    } else {
-      profileGamesPlayed.innerText = "0";
-      profileHighestScore.innerText = "0";
-      profileTimestamp.innerText = "Never played";
+    try {
+        const targetUserStatsRef = ref(db, `users/${uid}/gamesPlayed`);
+        const targetUserLedStatsRef = ref(db, `leaderboard/${uid}`);
+        const snapshot = await get(targetUserStatsRef);
+        const snapshot_led = await get(targetUserLedStatsRef);
+        if (snapshot.exists() && snapshot_led.exists()) {
+            profileGamesPlayed.innerText = snapshot.val();
+            profileHighestScore.innerText = snapshot_led.val().score;
+            profileTimestamp.innerText = new Date(
+                snapshot_led.val().timestamp,
+            ).toLocaleString();
+        } else {
+            profileGamesPlayed.innerText = "0";
+            profileHighestScore.innerText = "0";
+            profileTimestamp.innerText = "Never played";
+        }
+    } catch (e) {
+        console.error("Error fetching inspected profile stats: ", e);
+        profileGamesPlayed.innerText = "Error loading count";
     }
-  } catch (e) {
-    console.error("Error fetching inspected profile stats: ", e);
-    profileGamesPlayed.innerText = "Error loading count";
-  }
 }
 
 profileCloseBtn.addEventListener("click", () => {
-  if (previousScreenBeforeProfile) {
-    blitScreen(previousScreenBeforeProfile);
-  } else {
-    blitScreen(startScreen);
-  }
+    if (previousScreenBeforeProfile) {
+        blitScreen(previousScreenBeforeProfile);
+    } else {
+        blitScreen(startScreen);
+    }
 });
-
 
 // --- AUTHENTICATION ACTIONS ---
 authToggleLink.addEventListener("click", () => {
-  isSignUpMode = !isSignUpMode;
-  if (isSignUpMode) {
-    authTitle.innerText = "Create Account";
-    authDesc.innerHTML = 'on <b>MathsOnMyFoot</b> to play and score globally!';
-    authUsername.classList.remove("hidden");
-    forgotPasswordContainer.classList.add("hidden"); // Hide on sign up
-    authSubmitBtn.innerText = "Sign Up";
-    authToggleText.innerText = "Already have an account?";
-    authToggleLink.innerText = "Login";
-  } else {
-    authTitle.innerText = "Welcome Back";
-    authDesc.innerHTML = 'to <b>MathsOnMyFoot</b> &nbsp; ;)';
-    authUsername.classList.add("hidden");
-    forgotPasswordContainer.classList.remove("hidden"); // Show on login
-    authSubmitBtn.innerText = "Log In";
-    authToggleText.innerText = "Don't have an account?";
-    authToggleLink.innerText = "Sign Up";
-  }
+    isSignUpMode = !isSignUpMode;
+    if (isSignUpMode) {
+        authTitle.innerText = "Create Account";
+        authDesc.innerHTML = "on <b>MathsOnMyFoot</b> to play and score globally!";
+        authUsername.classList.remove("hidden");
+        forgotPasswordContainer.classList.add("hidden"); // Hide on sign up
+        authSubmitBtn.innerText = "Sign Up";
+        authToggleText.innerText = "Already have an account?";
+        authToggleLink.innerText = "Login";
+    } else {
+        authTitle.innerText = "Welcome Back";
+        authDesc.innerHTML = "to <b>MathsOnMyFoot</b> &nbsp; ;)";
+        authUsername.classList.add("hidden");
+        forgotPasswordContainer.classList.remove("hidden"); // Show on login
+        authSubmitBtn.innerText = "Log In";
+        authToggleText.innerText = "Don't have an account?";
+        authToggleLink.innerText = "Sign Up";
+    }
 });
-
 
 authSubmitBtn.addEventListener("click", async () => {
-  const email = authEmail.value.trim();
-  const password = authPassword.value;
-  const username = authUsername.value.trim();
+    const email = authEmail.value.trim();
+    const password = authPassword.value;
+    const username = authUsername.value.trim();
 
-  if (!email || !password) {
-    alert("Please fill out email and password.");
-    return;
-  }
-
-  try {
-    if (isSignUpMode) {
-      if (!username) {
-        alert("Please pick a username.");
+    if (!email || !password) {
+        alert("Please fill out email and password.");
         return;
-      }
-      const userCredential = await createUserWithEmailAndPassword(
-        auth,
-        email,
-        password,
-      );
-      await updateProfile(userCredential.user, { displayName: username });
-      window.location.reload();
-    } else {
-      await signInWithEmailAndPassword(auth, email, password);
     }
-  } catch (error) {
-    alert(error.message);
-  }
-});
 
+    try {
+        if (isSignUpMode) {
+            if (!username) {
+                alert("Please pick a username.");
+                return;
+            }
+            const userCredential = await createUserWithEmailAndPassword(
+                auth,
+                email,
+                password,
+            );
+            await updateProfile(userCredential.user, { displayName: username });
+            window.location.reload();
+        } else {
+            await signInWithEmailAndPassword(auth, email, password);
+        }
+    } catch (error) {
+        alert(error.message);
+    }
+});
 
 // Forgot Password Function for people with goldfish memory.. Lmao!!
 authForgotLink.addEventListener("click", async () => {
-  const email = authEmail.value.trim();
-  if (!email) {
-    alert("Please type your account email address into the input field first, then click 'Forgot Password?");
-    return;
-  }
-  try {
-    await sendPasswordResetEmail(auth, email);
-    alert(`Password reset link successfully sent to: ${email}. Please check your inbox or spam folder!`);
-  } catch (error) {
-    alert(error.message);
-  }
+    const email = authEmail.value.trim();
+    if (!email) {
+        alert(
+            "Please type your account email address into the input field first, then click 'Forgot Password?",
+        );
+        return;
+    }
+    try {
+        await sendPasswordResetEmail(auth, email);
+        alert(
+            `Password reset link successfully sent to: ${email}. Please check your inbox or spam folder!`,
+        );
+    } catch (error) {
+        alert(error.message);
+    }
 });
 
 // LOG OUT MF!!
@@ -264,39 +298,86 @@ startBtn.addEventListener("click", runGameInit);
 restartBtn.addEventListener("click", runGameInit);
 
 exitBtn.addEventListener("click", () => {
-  blitScreen(startScreen);
+    blitScreen(startScreen);
 });
 
 viewLeaderboardBtn.addEventListener("click", () => {
-  blitScreen(viewLeaderboardScreen);
-  fetchLeaderboard(standaloneLeaderboardList, viewLeaderboardScreen);
+    blitScreen(viewLeaderboardScreen);
+    fetchLeaderboard(standaloneLeaderboardList, viewLeaderboardScreen);
 });
+
+
+
+
+// --- SIMPLE ANTI-CHEAT SYSTEM, PEEPS SO CRAZY TO HACK THE GAME ---
+let antiCheatWarnings = 0;
+
+document.addEventListener("visibilitychange", () => {
+    // Only track cheating if a match is running
+    if (document.hidden && isGameActive) {
+        handleTabViolation();
+    }
+});
+
+window.addEventListener("blur", () => {
+    if (isGameActive) {
+        handleTabViolation();
+    }
+});
+
+function handleTabViolation() {
+    antiCheatWarnings++;
+
+    if (antiCheatWarnings === 1) {
+        // First offense: Give them a clear warning
+        alert("⚠️ WARNING: Do not switch tabs or leave the game screen. Next time, your score will be wiped!");
+    } else if (antiCheatWarnings >= 2) {
+        // Second offense: Ban them from this round
+        clearInterval(timer);
+        isGameActive = false;
+
+        alert("❌ DISQUALIFIED: You switched tabs again. Game over, score not saved.");
+
+        // Reset warnings for their next clean attempt
+        antiCheatWarnings = 0;
+        gameOver();
+    }
+}
+
+
+
 
 backToMenuBtn.addEventListener("click", () => blitScreen(startScreen));
 
+
+
+
 function runGameInit() {
-  blitScreen(gameScreen);
-  score = 0;
-  scoreVal.innerText = score;
-  nextQuestion();
+    isGameActive = true;
+    blitScreen(gameScreen);
+    score = 0;
+    scoreVal.innerText = score;
+    nextQuestion();
 }
+
+
 
 // --- The real robust Game Engine for MathsOnMyFoot by dwijottam ---
 function gameENGINE() {
-  let num1, num2, num3;
+    let num1, num2, num3;
     let operator1, operator2;
-    
+
     if (score <= 10) {
         // TIER 1: Warmup (Scores 0 to 10) -- Basic Addition/Subtraction, Single Digit Multiplication
-        const ops = ['+', '-', '*'];
+        const ops = ["+", "-", "*"];
         operator1 = ops[Math.floor(Math.random() * ops.length)];
-        
-        if (operator1 === '+') {
+
+        if (operator1 === "+") {
             num1 = Math.floor(Math.random() * 15) + 3; // 3 to 17
             num2 = Math.floor(Math.random() * 15) + 3;
             currentAnswer = num1 + num2;
             equationDisplay.innerText = `${num1} + ${num2}`;
-        } else if (operator1 === '-') {
+        } else if (operator1 === "-") {
             num1 = Math.floor(Math.random() * 20) + 10; // 10 to 29
             num2 = Math.floor(Math.random() * (num1 - 2)) + 1;
             currentAnswer = num1 - num2;
@@ -307,100 +388,95 @@ function gameENGINE() {
             currentAnswer = num1 * num2;
             equationDisplay.innerText = `${num1} × ${num2}`;
         }
-        
     } else if (score <= 25) {
         // TIER 2: Heat-Up (Scores 11 to 25) -- Larger Numbers, Division Joins, Triple-Digit Additions
-        const ops = ['+', '-', '*', '/'];
+        const ops = ["+", "-", "*", "/"];
         operator1 = ops[Math.floor(Math.random() * ops.length)];
-        
-        if (operator1 === '+') {
+
+        if (operator1 === "+") {
             num1 = Math.floor(Math.random() * 80) + 20; // 20 to 99
             num2 = Math.floor(Math.random() * 80) + 20;
             currentAnswer = num1 + num2;
             equationDisplay.innerText = `${num1} + ${num2}`;
-        } else if (operator1 === '-') {
+        } else if (operator1 === "-") {
             num1 = Math.floor(Math.random() * 100) + 30;
             num2 = Math.floor(Math.random() * (num1 - 10)) + 5;
             currentAnswer = num1 - num2;
             equationDisplay.innerText = `${num1} - ${num2}`;
-        } else if (operator1 === '*') {
+        } else if (operator1 === "*") {
             num1 = Math.floor(Math.random() * 21) + 2; // Factor 1: 2 to 22
-            num2 = Math.floor(Math.random() * 8) + 2;  // Factor 2: 2 to 9
+            num2 = Math.floor(Math.random() * 8) + 2; // Factor 2: 2 to 9
             currentAnswer = num1 * num2;
             equationDisplay.innerText = `${num1} × ${num2}`;
         } else {
             // Divisor is kept between 2 and 6 (much easier to calculate mentally)
-            num2 = Math.floor(Math.random() * 5) + 2; 
+            num2 = Math.floor(Math.random() * 5) + 2;
 
             // The actual answer is kept between 2 and 9
-            currentAnswer = Math.floor(Math.random() * 8) + 2; 
+            currentAnswer = Math.floor(Math.random() * 8) + 2;
 
             num1 = num2 * currentAnswer; // Perfectly divisible! (Max equation: 54 ÷ 6)
             equationDisplay.innerText = `${num1} ÷ ${num2}`;
         }
-        
     } else if (score <= 35) {
         // TIER 3: Arcade Rush (Scores 25 to 35) - Toned down & engaging
-        const subTiers = ['3term_singles', 'casual_mult', 'casual_div'];
+        const subTiers = ["3term_singles", "casual_mult", "casual_div"];
         const chosenType = subTiers[Math.floor(Math.random() * subTiers.length)];
-        
-        if (chosenType === '3term_singles') {
+
+        if (chosenType === "3term_singles") {
             // Three terms, heavy focus on single digits for instinctual math (e.g. 7 + 8 - 4)
             num1 = Math.floor(Math.random() * 9) + 2; // 2 to 10
             num2 = Math.floor(Math.random() * 9) + 2;
             num3 = Math.floor(Math.random() * 9) + 2;
-            
-            operator1 = Math.random() < 0.5 ? '+' : '-';
-            operator2 = Math.random() < 0.5 ? '+' : '-';
-            
-            let intermediate = operator1 === '+' ? num1 + num2 : num1 - num2;
-            if (operator2 === '-' && intermediate < num3) {
-                operator2 = '+'; // Keep it positive and friendly
+
+            operator1 = Math.random() < 0.5 ? "+" : "-";
+            operator2 = Math.random() < 0.5 ? "+" : "-";
+
+            let intermediate = operator1 === "+" ? num1 + num2 : num1 - num2;
+            if (operator2 === "-" && intermediate < num3) {
+                operator2 = "+"; // Keep it positive and friendly
             }
-            currentAnswer = operator2 === '+' ? intermediate + num3 : intermediate - num3;
+            currentAnswer =
+                operator2 === "+" ? intermediate + num3 : intermediate - num3;
             equationDisplay.innerText = `${num1} ${operator1} ${num2} ${operator2} ${num3}`;
-            
-        } else if (chosenType === 'casual_mult') {
+        } else if (chosenType === "casual_mult") {
             // Multiplication with recognizable factors (e.g. 12 x 5, 15 x 3, 25 x 2)
             const friendlyBases = [11, 12, 13, 14, 15, 20, 25];
             num1 = friendlyBases[Math.floor(Math.random() * friendlyBases.length)];
             num2 = Math.floor(Math.random() * 4) + 2; // Multipliers: 2 to 5
             currentAnswer = num1 * num2;
             equationDisplay.innerText = `${num1} × ${num2}`;
-            
         } else {
             // Recognizable division tables (e.g. 72 ÷ 8, 60 ÷ 5)
-            num2 = Math.floor(Math.random() * 7) + 4;          // Divisor: 4 to 10
+            num2 = Math.floor(Math.random() * 7) + 4; // Divisor: 4 to 10
             currentAnswer = Math.floor(Math.random() * 7) + 5; // Answer: 5 to 11
             num1 = num2 * currentAnswer;
             equationDisplay.innerText = `${num1} ÷ ${num2}`;
         }
-        
     } else {
         // TIER 4: Ultimate Flow State (Scores 36+) - Pure speed, no homework math
-        const subTiers = ['3term_mix', 'tier2_mix', 'tier3_mix'];
+        const subTiers = ["3term_mix", "tier2_mix", "tier3_mix"];
         const chosenType = subTiers[Math.floor(Math.random() * subTiers.length)];
-        
-        if (chosenType === '3term_mix') {
+
+        if (chosenType === "3term_mix") {
             // Mixed 3-term arithmetic using smooth values (e.g. 2 x 5 + 7)
             num1 = Math.floor(Math.random() * 7) + 2; // 2 to 8
             num2 = Math.floor(Math.random() * 5) + 2; // 2 to 6
             num3 = Math.floor(Math.random() * 15) + 2;
-            
-            operator1 = Math.random() < 0.5 ? '+' : '-';
+
+            operator1 = Math.random() < 0.5 ? "+" : "-";
             let product = num1 * num2;
-            
-            if (operator1 === '-' && product < num3) {
-                operator1 = '+';
+
+            if (operator1 === "-" && product < num3) {
+                operator1 = "+";
             }
-            currentAnswer = operator1 === '+' ? product + num3 : product - num3;
+            currentAnswer = operator1 === "+" ? product + num3 : product - num3;
             equationDisplay.innerText = `(${num1} × ${num2}) ${operator1} ${num3}`;
-            
-        } else if (chosenType === 'tier2_mix') {
+        } else if (chosenType === "tier2_mix") {
             // Bring back fast-paced addition/subtraction from Tier 2
-            const ops = ['+', '-'];
+            const ops = ["+", "-"];
             operator1 = ops[Math.floor(Math.random() * ops.length)];
-            if (operator1 === '+') {
+            if (operator1 === "+") {
                 num1 = Math.floor(Math.random() * 60) + 20;
                 num2 = Math.floor(Math.random() * 60) + 20;
                 currentAnswer = num1 + num2;
@@ -430,60 +506,60 @@ function gameENGINE() {
 }
 
 function nextQuestion() {
-  gameENGINE();
-  generateOptions();
-  resetTimer();
+    gameENGINE();
+    generateOptions();
+    resetTimer();
 }
 
 // --- OPTIONS GENERATION ---
 function generateOptions() {
-  const options = [currentAnswer];
+    const options = [currentAnswer];
 
-  while (options.length < 4) {
-    let offset;
-    if (currentAnswer <= 10) {
-      offset = Math.floor(Math.random() * 5) + 1;
-    } else if (currentAnswer <= 50) {
-      offset = Math.floor(Math.random() * 10) + 1;
-    } else {
-      offset = Math.floor(Math.random() * 20) + 1;
+    while (options.length < 4) {
+        let offset;
+        if (currentAnswer <= 10) {
+            offset = Math.floor(Math.random() * 5) + 1;
+        } else if (currentAnswer <= 50) {
+            offset = Math.floor(Math.random() * 10) + 1;
+        } else {
+            offset = Math.floor(Math.random() * 20) + 1;
+        }
+
+        const fakeAnswer =
+            Math.random() < 0.5 ? currentAnswer + offset : currentAnswer - offset;
+
+        if (fakeAnswer >= 0 && !options.includes(fakeAnswer)) {
+            options.push(fakeAnswer);
+        }
     }
 
-    const fakeAnswer =
-      Math.random() < 0.5 ? currentAnswer + offset : currentAnswer - offset;
+    options.sort(() => Math.random() - 0.5);
 
-    if (fakeAnswer >= 0 && !options.includes(fakeAnswer)) {
-      options.push(fakeAnswer);
-    }
-  }
-
-  options.sort(() => Math.random() - 0.5);
-
-  optionsContainer.innerHTML = "";
-  options.forEach((option) => {
-    const button = document.createElement("button");
-    button.className = "option-btn";
-    button.innerText = option;
-    button.addEventListener("click", () => checkAnswer(option));
-    optionsContainer.appendChild(button);
-  });
+    optionsContainer.innerHTML = "";
+    options.forEach((option) => {
+        const button = document.createElement("button");
+        button.className = "option-btn";
+        button.innerText = option;
+        button.addEventListener("click", () => checkAnswer(option));
+        optionsContainer.appendChild(button);
+    });
 }
 
 function checkAnswer(selectedOption) {
-  if (selectedOption === currentAnswer) {
-    score++;
-    scoreVal.innerText = score;
-    nextQuestion();
-  } else {
-    clearInterval(timer);
-    gameOver();
-  }
+    if (selectedOption === currentAnswer) {
+        score++;
+        scoreVal.innerText = score;
+        nextQuestion();
+    } else {
+        clearInterval(timer);
+        gameOver();
+    }
 }
 
 // --- TIMER PIPELINE ---
 function resetTimer() {
-  clearInterval(timer);
-    
+    clearInterval(timer);
+
     let adaptiveTimeLimit;
 
     if (score <= 22) {
@@ -491,15 +567,15 @@ function resetTimer() {
         adaptiveTimeLimit = 10.0;
     } else if (score <= 35) {
         // Tier 3
-        adaptiveTimeLimit = 15.0; 
+        adaptiveTimeLimit = 12.0;
     } else {
         // Tier 4
-        adaptiveTimeLimit = 17.0;
+        adaptiveTimeLimit = 14.0;
     }
 
     timeLeft = adaptiveTimeLimit;
     updateTimerUI(adaptiveTimeLimit);
-    
+
     timer = setInterval(() => {
         timeLeft -= 0.1;
         if (timeLeft <= 0) {
@@ -512,123 +588,120 @@ function resetTimer() {
 }
 
 function updateTimerUI(maxLimit) {
-  timerVal.innerText = `${Math.ceil(timeLeft)}s`;
-  const percentage = (timeLeft / maxLimit) * 100;
-  timerBar.style.width = `${percentage}%`;
+    timerVal.innerText = `${Math.ceil(timeLeft)}s`;
+    const percentage = (timeLeft / maxLimit) * 100;
+    timerBar.style.width = `${percentage}%`;
 
-  if (timeLeft <= 3) {
-    timerBar.style.backgroundColor = "var(--danger)";
-  } else {
-    timerBar.style.backgroundColor = "var(--accent)";
-  }
+    if (timeLeft <= 3) {
+        timerBar.style.backgroundColor = "var(--danger)";
+    } else {
+        timerBar.style.backgroundColor = "var(--accent)";
+    }
 }
 
 // --- END RUN & DATA OPERATIONS ---
 async function gameOver() {
     gameover.play();
-  blitScreen(leaderboardScreen);
-  finalScore.innerText = score;
+    isGameActive = false;
+    blitScreen(leaderboardScreen);
+    finalScore.innerText = score;
 
-  if (currentUser) {
-    try {
-      const userStatsRef = ref(db, `users/${currentUser.uid}/gamesPlayed`);
-      await runTransaction(userStatsRef, (currentValue) => {
-        return (currentValue || 0) + 1;
-      });
-    } catch (e) {
-      console.error("Error updating user statistics: ", e);
-    }
-
-    try {
-        // We targeing 'leaderboard/USER_UID'
-        const personalRecordRef = ref(db, `leaderboard/${currentUser.uid}`);
-        const snapshot = await get(personalRecordRef);
-            
-        let shouldUpdate = true;
-        if (snapshot.exists()) {
-            const existingRecord = snapshot.val();
-            // If their new score is less than or equal to their saved record, don't overwrite it
-            if (score <= existingRecord.score) {
-                shouldUpdate = false;
-            }
-        }
-
-        if (shouldUpdate) {
-            await set(personalRecordRef, {
-                uid: currentUser.uid,
-                name: currentUser.displayName || "Anonymous Player",
-                score: score,
-                timestamp: Date.now()
+    if (currentUser) {
+        try {
+            const userStatsRef = ref(db, `users/${currentUser.uid}/gamesPlayed`);
+            await runTransaction(userStatsRef, (currentValue) => {
+                return (currentValue || 0) + 1;
             });
+        } catch (e) {
+            console.error("Error updating user statistics: ", e);
         }
-    } catch (e) {
-        console.error("Error saving score: ", e);
-    }
-  }
-  fetchLeaderboard(gameoverLeaderboardList, leaderboardScreen);
-}
 
+        try {
+            // We targeing 'leaderboard/USER_UID'
+            const personalRecordRef = ref(db, `leaderboard/${currentUser.uid}`);
+            const snapshot = await get(personalRecordRef);
+
+            let shouldUpdate = true;
+            if (snapshot.exists()) {
+                const existingRecord = snapshot.val();
+                // If their new score is less than or equal to their saved record, don't overwrite it
+                if (score <= existingRecord.score) {
+                    shouldUpdate = false;
+                }
+            }
+
+            if (shouldUpdate) {
+                await set(personalRecordRef, {
+                    uid: currentUser.uid,
+                    name: currentUser.displayName || "Anonymous Player",
+                    score: score,
+                    timestamp: Date.now(),
+                });
+            }
+        } catch (e) {
+            console.error("Error saving score: ", e);
+        }
+    }
+    fetchLeaderboard(gameoverLeaderboardList, leaderboardScreen);
+}
 
 async function fetchLeaderboard(targetListElement, activeScreenElement) {
-  targetListElement.innerHTML = "<li>Loading scores...</li>";
-  congo();
-  try {
-    const leaderboardRef = ref(db, "leaderboard");
-    const dbQuery = query(
-      leaderboardRef,
-      orderByChild("score")
-    //   startAt(10),
-    //   limitToLast(10),
-    );
-    const snapshot = await get(dbQuery);
-
-    targetListElement.innerHTML = "";
-
-    if (snapshot.exists()) {
-      const rawData = [];
-      snapshot.forEach((childSnapshot) => {
-        rawData.push(childSnapshot.val());
-      });
-      rawData.reverse();
-
-      let rank = 1;
-      rawData.forEach((entry) => {
-        const li = document.createElement("li");
-
-        const nameSpan = document.createElement("span");
-        nameSpan.className = "leaderboard-name-clickable";
-        nameSpan.innerHTML = `#${rank} <b>${entry.name}</b>`;
-        nameSpan.addEventListener("click", () =>
-          openUserProfileCard(entry.uid, entry.name, activeScreenElement),
+    targetListElement.innerHTML = "<li>Loading scores...</li>";
+    congo();
+    try {
+        const leaderboardRef = ref(db, "leaderboard");
+        const dbQuery = query(
+            leaderboardRef,
+            orderByChild("score"),
+            //   startAt(10),
+            //   limitToLast(10),
         );
+        const snapshot = await get(dbQuery);
 
-        const scoreStrong = document.createElement("strong");
-        scoreStrong.innerHTML = `<b>${entry.score}</b>`;
+        targetListElement.innerHTML = "";
 
-        li.appendChild(nameSpan);
-        li.appendChild(scoreStrong);
-        targetListElement.appendChild(li);
-        rank++;
-      });
-    } else {
-      targetListElement.innerHTML =
-        "<li>$db is null</li>";
+        if (snapshot.exists()) {
+            const rawData = [];
+            snapshot.forEach((childSnapshot) => {
+                rawData.push(childSnapshot.val());
+            });
+            rawData.reverse();
+
+            let rank = 1;
+            rawData.forEach((entry) => {
+                const li = document.createElement("li");
+
+                const nameSpan = document.createElement("span");
+                nameSpan.className = "leaderboard-name-clickable";
+                nameSpan.innerHTML = `#${rank} <b>${entry.name}</b>`;
+                nameSpan.addEventListener("click", () =>
+                    openUserProfileCard(entry.uid, entry.name, activeScreenElement),
+                );
+
+                const scoreStrong = document.createElement("strong");
+                scoreStrong.innerHTML = `<b>${entry.score}</b>`;
+
+                li.appendChild(nameSpan);
+                li.appendChild(scoreStrong);
+                targetListElement.appendChild(li);
+                rank++;
+            });
+        } else {
+            targetListElement.innerHTML = "<li>$db is null</li>";
+        }
+    } catch (e) {
+        console.error("Error retrieving leaderboard: ", e);
+        targetListElement.innerHTML = "<li>Error loading leaderboard records.</li>";
     }
-  } catch (e) {
-    console.error("Error retrieving leaderboard: ", e);
-    targetListElement.innerHTML = "<li>Error loading leaderboard records.</li>";
-  }
 }
-
-
 
 // This function will blit that screen which is passed in the arg**
 function blitScreen(screenToShow) {
-  authScreen.classList.add("hidden");
-  startScreen.classList.add("hidden");
-  viewLeaderboardScreen.classList.add("hidden");
-  profileViewerScreen.classList.add("hidden");
-  gameScreen.classList.add("hidden");
-  leaderboardScreen.classList.add("hidden");
-  screenToShow.classList.remove("hidden");
+    authScreen.classList.add("hidden");
+    startScreen.classList.add("hidden");
+    viewLeaderboardScreen.classList.add("hidden");
+    profileViewerScreen.classList.add("hidden");
+    gameScreen.classList.add("hidden");
+    leaderboardScreen.classList.add("hidden");
+    screenToShow.classList.remove("hidden");
 }
