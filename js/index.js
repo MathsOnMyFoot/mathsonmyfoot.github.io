@@ -336,7 +336,7 @@ function handleTabViolation() {
         clearInterval(timer);
         isGameActive = false;
 
-        alert("❌ DISQUALIFIED: You switched tabs again. Game over, score not saved.");
+        alert("DISQUALIFIED: You switched tabs again. Game over, score not saved.");
 
         // Reset warnings for their next clean attempt
         antiCheatWarnings = 0;
