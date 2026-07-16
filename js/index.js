@@ -323,8 +323,8 @@ function gameENGINE() {
             currentAnswer = num1 - num2;
             equationDisplay.innerText = `${num1} - ${num2}`;
         } else if (operator1 === '*') {
-            num1 = Math.floor(Math.random() * 11) + 4; // 4 to 14
-            num2 = Math.floor(Math.random() * 11) + 3; // 3 to 13
+            num1 = Math.floor(Math.random() * 21) + 2; // Factor 1: 2 to 22
+            num2 = Math.floor(Math.random() * 8) + 2;  // Factor 2: 2 to 9
             currentAnswer = num1 * num2;
             equationDisplay.innerText = `${num1} × ${num2}`;
         } else {
@@ -339,7 +339,7 @@ function gameENGINE() {
         }
         
     } else if (score <= 35) {
-        // TIER 3: Arcade Rush (Scores 13 to 22) - Toned down & engaging
+        // TIER 3: Arcade Rush (Scores 25 to 35) - Toned down & engaging
         const subTiers = ['3term_singles', 'casual_mult', 'casual_div'];
         const chosenType = subTiers[Math.floor(Math.random() * subTiers.length)];
         
@@ -376,7 +376,7 @@ function gameENGINE() {
         }
         
     } else {
-        // TIER 4: Ultimate Flow State (Scores 23+) - Pure speed, no homework math
+        // TIER 4: Ultimate Flow State (Scores 36+) - Pure speed, no homework math
         const subTiers = ['3term_mix', 'tier2_mix', 'tier3_mix'];
         const chosenType = subTiers[Math.floor(Math.random() * subTiers.length)];
         
