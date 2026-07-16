@@ -28,6 +28,7 @@ let timeLeft = 10;
 const TIME_LIMIT = 10;
 let isSignUpMode = true;
 let previousScreenBeforeProfile = null;
+const gameover = new Audio('../audio/gameover.mp3');
 
 // Elements
 const authScreen = document.getElementById("auth-screen");
@@ -524,6 +525,7 @@ function updateTimerUI(maxLimit) {
 
 // --- END RUN & DATA OPERATIONS ---
 async function gameOver() {
+    gameover.play();
   blitScreen(leaderboardScreen);
   finalScore.innerText = score;
 
