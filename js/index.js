@@ -12,6 +12,7 @@ import {
     getDatabase,
     ref,
     push,
+    update,
     set,
     query,
     orderByChild,
@@ -54,18 +55,14 @@ const gameover = new Audio("../audio/gameover.mp3");
 // Elements
 const authScreen = document.getElementById("auth-screen");
 const startScreen = document.getElementById("start-screen");
-const viewLeaderboardScreen = document.getElementById(
-    "view-leaderboard-screen",
-);
+const viewLeaderboardScreen = document.getElementById("view-leaderboard-screen");
 const profileViewerScreen = document.getElementById("profile-viewer-screen");
 const gameScreen = document.getElementById("game-screen");
 const leaderboardScreen = document.getElementById("leaderboard-screen");
 
 const authTitle = document.getElementById("auth-title");
 const authDesc = document.getElementById("auth-desc");
-const forgotPasswordContainer = document.getElementById(
-    "forgot-password-container",
-);
+const forgotPasswordContainer = document.getElementById("forgot-password-container");
 const authForgotLink = document.getElementById("auth-forgot-link");
 const authUsername = document.getElementById("auth-username");
 const authEmail = document.getElementById("auth-email");
@@ -106,17 +103,39 @@ const gameoverLeaderboardList = document.getElementById(
 const restartBtn = document.getElementById("restart-btn");
 const exitBtn = document.getElementById("exit-btn");
 
-// *** AUTHENTICATION STATE OBSERVER ***
-onAuthStateChanged(auth, (user) => {
+
+// *************************** AUTHENTICATION STATE OBSERVER ***************************
+onAuthStateChanged(auth, async (user) => {
     if (user) {
         currentUser = user;
-        welcomeUsername.innerText = user.displayName || "Anonymous";
+
+        try {
+            // Get username from your new leaderboard path
+            const userRef = ref(db, `leaderboard/${user.uid}`);
+            const snapshot = await get(userRef);
+            
+            if (snapshot.exists()) {
+                const userData = snapshot.val();
+                const dbName = userData.name; // This is the name from the database!
+                
+                // Display the database name on your UI
+                welcomeUsername.innerText = dbName; 
+                console.log(`Welcome back, ${dbName}! (Loaded from Database)`);
+            } else {
+                // Error: If they somehow don't have a database record yet, use auth name
+                welcomeUsername.innerText = user.displayName || "Player_$NULL";
+                alert("Something went wrong with your name!! Contact the developer ASAP!!");
+            }
+        } catch (error) {
+            alert("Something went wrong with your name!! Contact the developer ASAP!!");
+            welcomeUsername.innerText = user.displayName || "Player_$NULL";
+        }
 
         // Show Start Screen and Hide Auth Screen
         blitScreen(startScreen);
 
         // Show Runs Played Stats
-        const userStatsRef = ref(db, `users/${currentUser.uid}/gamesPlayed`);
+        const userStatsRef = ref(db, `leaderboard/${currentUser.uid}/gamesPlayed`);
 
         // This listens to changes continuously and does not need async/await
         onValue(
@@ -136,7 +155,9 @@ onAuthStateChanged(auth, (user) => {
         currentUser = null;
         blitScreen(authScreen);
 
-        // Showing LeaderBoard Top Player in the Auth Banner
+
+        // SHOWING LEADERBOARD TOP PLAYER IN AUTH SCREEN MARQUEE ....... DON'T ONFUSE AND MAKE SHITTY MISTAKES LIKE I DID EARLIER, THIS IS NOT THE LEADERBOARD SCREEN, THIS IS THE AUTH SCREEN
+
         const leaderboardRef = ref(db, "leaderboard");
         // Query the single highest score
         const topScoreQuery = query(
@@ -173,8 +194,12 @@ onAuthStateChanged(auth, (user) => {
                 authTopPlayerDiv.style.display = "none";
             },
         );
+        // ENDS HERE
+
     }
 });
+
+
 
 // --- PROFILE VIEW LOGIC ---
 async function openUserProfileCard(uid, displayName, originScreen) {
@@ -185,8 +210,8 @@ async function openUserProfileCard(uid, displayName, originScreen) {
     profileUidText.innerText = `ID: ${uid}`;
     profileGamesPlayed.innerText = "Loading...";
 
-    try {
-        const targetUserStatsRef = ref(db, `users/${uid}/gamesPlayed`);
+    try {                          //previously user/uid/gameplayed thats why didn't changed
+        const targetUserStatsRef = ref(db, `leaderboard/${uid}/gamesPlayed`); 
         const targetUserLedStatsRef = ref(db, `leaderboard/${uid}`);
         const snapshot = await get(targetUserStatsRef);
         const snapshot_led = await get(targetUserLedStatsRef);
@@ -207,6 +232,7 @@ async function openUserProfileCard(uid, displayName, originScreen) {
     }
 }
 
+// Profile Close Button
 profileCloseBtn.addEventListener("click", () => {
     if (previousScreenBeforeProfile) {
         blitScreen(previousScreenBeforeProfile);
@@ -215,7 +241,8 @@ profileCloseBtn.addEventListener("click", () => {
     }
 });
 
-// --- AUTHENTICATION ACTIONS ---
+
+// --- AUTHENTICATION LOGIN/SIGNUP TOGGLE BUTTON EVENT LISTENER ---
 authToggleLink.addEventListener("click", () => {
     isSignUpMode = !isSignUpMode;
     if (isSignUpMode) {
@@ -237,6 +264,8 @@ authToggleLink.addEventListener("click", () => {
     }
 });
 
+
+// --- AUTHENTICATION BUTTON EVENT LISTENER ---
 authSubmitBtn.addEventListener("click", async () => {
     const email = authEmail.value.trim();
     const password = authPassword.value;
@@ -253,12 +282,28 @@ authSubmitBtn.addEventListener("click", async () => {
                 alert("Please pick a username.");
                 return;
             }
-            const userCredential = await createUserWithEmailAndPassword(
-                auth,
-                email,
-                password,
-            );
-            await updateProfile(userCredential.user, { displayName: username });
+            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+            const user = userCredential.user;
+            console.log("Auth account created successfully!");
+
+            // 2. Update their Firebase Auth Profile
+            await updateProfile(user, {
+                displayName: username
+            });
+            console.log("Auth profile display name updated!");
+            
+            // 3. Immediately initialize their profile in the leaderboard path
+            const initialUserRef = ref(db, `leaderboard/${user.uid}`);
+            await set(initialUserRef, {
+                uid: user.uid,
+                name: username,
+                score: 0,
+                gamesPlayed: 0,
+                timestamp: Date.now()
+            });
+            
+            alert("Thanks for joining! Now you can compete");
+
             window.location.reload();
         } else {
             await signInWithEmailAndPassword(auth, email, password);
@@ -268,26 +313,23 @@ authSubmitBtn.addEventListener("click", async () => {
     }
 });
 
-// Forgot Password Function for people with goldfish memory.. Lmao!!
+
+// FORGOT PASSWORD LINK EVENT LISTENER AND ITS LOGIC FOR THOSE WHO HAVE GOLDFISH MEMORY ... Lmao!!
 authForgotLink.addEventListener("click", async () => {
     const email = authEmail.value.trim();
     if (!email) {
-        alert(
-            "Please type your account email address into the input field first, then click 'Forgot Password?",
-        );
+        alert( "Please type your account email address into the input field first, then click 'Forgot Password?");
         return;
     }
     try {
         await sendPasswordResetEmail(auth, email);
-        alert(
-            `Password reset link successfully sent to: ${email}. Please check your inbox or spam folder!`,
-        );
+        alert(`Password reset link successfully sent to: ${email}. Please check your inbox or spam folder!`);
     } catch (error) {
         alert(error.message);
     }
 });
 
-// LOG OUT MF!!
+// LOG OUT U MF!!
 logoutBtn.addEventListener("click", () => {
     signOut(auth);
     location.reload();
@@ -296,22 +338,16 @@ logoutBtn.addEventListener("click", () => {
 // NAVIGATION & GENERAL ACTIONS
 startBtn.addEventListener("click", runGameInit);
 restartBtn.addEventListener("click", runGameInit);
-
-exitBtn.addEventListener("click", () => {
-    blitScreen(startScreen);
-});
-
+exitBtn.addEventListener("click", () => {   blitScreen(startScreen);   });
 viewLeaderboardBtn.addEventListener("click", () => {
     blitScreen(viewLeaderboardScreen);
     fetchLeaderboard(standaloneLeaderboardList, viewLeaderboardScreen);
 });
+backToMenuBtn.addEventListener("click", () => blitScreen(startScreen));
 
 
 
-
-// --- SIMPLE ANTI-CHEAT SYSTEM, PEEPS SO CRAZY TO HACK THE GAME ---
-let antiCheatWarnings = 0;
-
+// ATTACHING THE ANTI-CHEAT MECHANISM TO THE GAME SCREEN
 document.addEventListener("visibilitychange", () => {
     // Only track cheating if a match is running
     if (document.hidden && isGameActive) {
@@ -325,7 +361,10 @@ window.addEventListener("blur", () => {
     }
 });
 
-function handleTabViolation() {
+
+// A SIMPLE ANTICHEAT FOR TAB SWITCHING AND WINDOW FOCUS LOSS DURING GAMEPLAY
+let antiCheatWarnings = 0; 
+export function handleTabViolation() {
     antiCheatWarnings++;
 
     if (antiCheatWarnings === 1) {
@@ -336,20 +375,13 @@ function handleTabViolation() {
         clearInterval(timer);
         isGameActive = false;
 
-        alert("DISQUALIFIED: You switched tabs again. Game over, score not saved.");
+        alert("⚠️ DISQUALIFIED: You switched tabs again. Game over, score not saved.");
 
         // Reset warnings for their next clean attempt
         antiCheatWarnings = 0;
         gameOver();
     }
 }
-
-
-
-
-backToMenuBtn.addEventListener("click", () => blitScreen(startScreen));
-
-
 
 
 function runGameInit() {
@@ -455,7 +487,7 @@ function gameENGINE() {
         }
     } else {
         // TIER 4: Ultimate Flow State (Scores 36+) - Pure speed, no homework math
-        const subTiers = ["3term_mix", "tier2_mix", "tier3_mix"];
+        const subTiers = ["3term_mix", "tier2_mix", "tier3_mix", "medium_div"];
         const chosenType = subTiers[Math.floor(Math.random() * subTiers.length)];
 
         if (chosenType === "3term_mix") {
@@ -473,20 +505,35 @@ function gameENGINE() {
             currentAnswer = operator1 === "+" ? product + num3 : product - num3;
             equationDisplay.innerText = `(${num1} × ${num2}) ${operator1} ${num3}`;
         } else if (chosenType === "tier2_mix") {
-            // Bring back fast-paced addition/subtraction from Tier 2
+            // --- UPDATED: Tougher Addition & Subtraction Mix ---
             const ops = ["+", "-"];
             operator1 = ops[Math.floor(Math.random() * ops.length)];
             if (operator1 === "+") {
-                num1 = Math.floor(Math.random() * 60) + 20;
-                num2 = Math.floor(Math.random() * 60) + 20;
+                // Tougher Addition: e.g., 68 + 75 or 124 + 57 (requires mental carrying)
+                if (Math.random() < 0.5) {
+                    num1 = Math.floor(Math.random() * 50) + 50; // 50 to 99
+                    num2 = Math.floor(Math.random() * 50) + 50; // 50 to 99
+                } else {
+                    num1 = Math.floor(Math.random() * 100) + 100; // 100 to 199
+                    num2 = Math.floor(Math.random() * 60) + 30;   // 30 to 89
+                }
                 currentAnswer = num1 + num2;
                 equationDisplay.innerText = `${num1} + ${num2}`;
             } else {
+                // Snappy Subtraction
                 num1 = Math.floor(Math.random() * 90) + 20;
                 num2 = Math.floor(Math.random() * (num1 - 10)) + 5;
                 currentAnswer = num1 - num2;
                 equationDisplay.innerText = `${num1} - ${num2}`;
             }
+        } else if (chosenType === "medium_div") {
+            // Divisors: 6 to 15
+            num2 = Math.floor(Math.random() * 10) + 6; 
+            // Answers: 11 to 25
+            currentAnswer = Math.floor(Math.random() * 15) + 11; 
+            num1 = num2 * currentAnswer; 
+            
+            equationDisplay.innerText = `${num1} ÷ ${num2}`;
         } else {
             // Bring back the snappy 3-term single digits or friendly tables from Tier 3
             if (Math.random() < 0.5) {
@@ -567,10 +614,10 @@ function resetTimer() {
         adaptiveTimeLimit = 10.0;
     } else if (score <= 35) {
         // Tier 3
-        adaptiveTimeLimit = 12.0;
+        adaptiveTimeLimit = 11.0;
     } else {
         // Tier 4
-        adaptiveTimeLimit = 14.0;
+        adaptiveTimeLimit = 12.0;
     }
 
     timeLeft = adaptiveTimeLimit;
@@ -608,38 +655,39 @@ async function gameOver() {
 
     if (currentUser) {
         try {
-            const userStatsRef = ref(db, `users/${currentUser.uid}/gamesPlayed`);
-            await runTransaction(userStatsRef, (currentValue) => {
+            // Point directly to the gamesPlayed counter inside the leaderboard path
+            const gamesPlayedRef = ref(db, `leaderboard/${currentUser.uid}/gamesPlayed`);
+            await runTransaction(gamesPlayedRef, (currentValue) => {
                 return (currentValue || 0) + 1;
             });
-        } catch (e) {
-            console.error("Error updating user statistics: ", e);
-        }
+            console.log("Games played counter incremented in leaderboard path.");
 
-        try {
-            // We targeing 'leaderboard/USER_UID'
+            // Fetch current personal high score from the same leaderboard path
             const personalRecordRef = ref(db, `leaderboard/${currentUser.uid}`);
             const snapshot = await get(personalRecordRef);
 
             let shouldUpdate = true;
-            if (snapshot.exists()) {
-                const existingRecord = snapshot.val();
-                // If their new score is less than or equal to their saved record, don't overwrite it
-                if (score <= existingRecord.score) {
+            let existingScore = 0;
+
+            if (snapshot.exists() && snapshot.val().score !== undefined) {
+                existingScore = snapshot.val().score;
+                if (score <= existingScore) {
                     shouldUpdate = false;
+                    console.log(`Skipped leaderboard score update: Score (${score}) did not beat record (${existingScore}).`);
                 }
             }
 
+            //Update the leaderboard fields if they got a new high score
             if (shouldUpdate) {
-                await set(personalRecordRef, {
+                await update(personalRecordRef, {
                     uid: currentUser.uid,
-                    name: currentUser.displayName || "Anonymous Player",
                     score: score,
-                    timestamp: Date.now(),
+                    timestamp: Date.now()
                 });
+                console.log(`Leaderboard updated! New high score of ${score} for ${safeName}.`);
             }
-        } catch (e) {
-            console.error("Error saving score: ", e);
+        } catch (error) {
+            alert("Critical Error saving game stats or score to Database:", error.message);
         }
     }
     fetchLeaderboard(gameoverLeaderboardList, leaderboardScreen);
