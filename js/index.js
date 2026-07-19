@@ -50,6 +50,7 @@ const TIME_LIMIT = 10;
 let isSignUpMode = true;
 let previousScreenBeforeProfile = null;
 let isGameActive = false;
+let daily_led_active=true;
 const gameover = new Audio("../audio/gameover.mp3");
 
 // Elements
@@ -59,6 +60,8 @@ const viewLeaderboardScreen = document.getElementById("view-leaderboard-screen")
 const profileViewerScreen = document.getElementById("profile-viewer-screen");
 const gameScreen = document.getElementById("game-screen");
 const leaderboardScreen = document.getElementById("leaderboard-screen");
+const mathsonmyfootScreen = document.getElementById("mathsonmyfoot-screen");
+const modalBox = document.querySelectorAll('dialog')[0];
 
 const authTitle = document.getElementById("auth-title");
 const authDesc = document.getElementById("auth-desc");
@@ -77,7 +80,12 @@ const statsGamesPlayed = document.getElementById("stats-games-played");
 const startBtn = document.getElementById("start-btn");
 const viewLeaderboardBtn = document.getElementById("view-leaderboard-btn");
 const backToMenuBtn = document.getElementById("back-to-menu-btn");
+const scodeBtn = document.getElementById("scode-btn");
+const reportBtn = document.getElementById("report-btn");
+const creditsBtn = document.getElementById("credits-btn");
 const logoutBtn = document.getElementById("logout-btn");
+const changeLogBtn = document.getElementById("changelog-btn");
+const commitBtn = document.getElementById("commitcode-btn");
 
 const profileName = document.getElementById("profile-name");
 const profileUidText = document.getElementById("profile-uid-text");
@@ -93,6 +101,10 @@ const equationDisplay = document.getElementById("equation-display");
 const optionsContainer = document.getElementById("options-container");
 const finalScore = document.getElementById("final-score");
 
+
+const leaderboardH1 = document.getElementById("leaderboard-h1");
+const dailyTabBtn = document.querySelectorAll(".daily");
+const goatTabBtn = document.querySelectorAll(".goat");
 const standaloneLeaderboardList = document.getElementById(
     "standalone-leaderboard-list",
 );
@@ -102,6 +114,8 @@ const gameoverLeaderboardList = document.getElementById(
 
 const restartBtn = document.getElementById("restart-btn");
 const exitBtn = document.getElementById("exit-btn");
+
+const aboutClick = document.getElementById("aboutclick");
 
 
 // *************************** AUTHENTICATION STATE OBSERVER ***************************
@@ -154,48 +168,6 @@ onAuthStateChanged(auth, async (user) => {
     } else {
         currentUser = null;
         blitScreen(authScreen);
-
-
-        // SHOWING LEADERBOARD TOP PLAYER IN AUTH SCREEN MARQUEE ....... DON'T ONFUSE AND MAKE SHITTY MISTAKES LIKE I DID EARLIER, THIS IS NOT THE LEADERBOARD SCREEN, THIS IS THE AUTH SCREEN
-
-        const leaderboardRef = ref(db, "leaderboard");
-        // Query the single highest score
-        const topScoreQuery = query(
-            leaderboardRef,
-            orderByChild("score"),
-            limitToLast(1),
-        );
-        onValue(
-            topScoreQuery,
-            (snapshot) => {
-                try {
-                    if (snapshot.exists()) {
-                        let topPlayer = null;
-
-                        // Loop runs exactly once because limitToLast(1) returns a single child
-                        snapshot.forEach((childSnapshot) => {
-                            topPlayer = childSnapshot.val();
-                        });
-
-                        if (topPlayer) {
-                            authTopPlayerDiv.innerHTML = `🏆 <strong>${topPlayer.name}</strong> is leading the game with <strong>${topPlayer.score}</strong> points! &nbsp; | &nbsp; <b>Be the next one to Rock!!</b> 🫵`;
-                            authTopPlayerDiv.style.display = "block";
-                        }
-                    } else {
-                        authTopPlayerDiv.style.display = "none";
-                    }
-                } catch (e) {
-                    console.error("Error processing top player data:", e);
-                    authTopPlayerDiv.style.display = "none";
-                }
-            },
-            (error) => {
-                console.error("Error fetching top player for auth banner:", error);
-                authTopPlayerDiv.style.display = "none";
-            },
-        );
-        // ENDS HERE
-
     }
 });
 
@@ -339,11 +311,56 @@ logoutBtn.addEventListener("click", () => {
 startBtn.addEventListener("click", runGameInit);
 restartBtn.addEventListener("click", runGameInit);
 exitBtn.addEventListener("click", () => {   blitScreen(startScreen);   });
-viewLeaderboardBtn.addEventListener("click", () => {
+
+// For the STANDALONE Leaderboard
+viewLeaderboardBtn.addEventListener("click", () => { // *BY DEFAULT ONCE CLICKED VIEW LEADERBOARD IT WILL SHOW 'DAILY ACE'
     blitScreen(viewLeaderboardScreen);
+    fetchDailyLeaderboard(standaloneLeaderboardList, viewLeaderboardScreen);
+    daily_led_active=true;
+    leaderboardH1.innerHTML = "🏆 Daily Ace 🏆"
+    dailyTabBtn[0].classList.add('led-active');
+    goatTabBtn[0].classList.remove('led-active');
+});
+dailyTabBtn[0].addEventListener('click', (event) => {
+    // Highlight active tab styles...
+    dailyTabBtn[0].classList.add('led-active');
+    goatTabBtn[0].classList.remove('led-active');
+    leaderboardH1.innerHTML = "🏆 Daily Ace 🏆"
+        
+    // Fetch and display the fresh daily stats
+    fetchDailyLeaderboard(standaloneLeaderboardList, viewLeaderboardScreen);
+});
+goatTabBtn[0].addEventListener('click', (event) => {
+    // Highlight active tab styles...
+    goatTabBtn[0].classList.add('led-active');
+    dailyTabBtn[0].classList.remove('led-active');
+
+    leaderboardH1.innerHTML = "🐐 Hall of Fame 🐐"
+
+    congo();
+        
+    // Fetch and display the fresh daily stats
     fetchLeaderboard(standaloneLeaderboardList, viewLeaderboardScreen);
 });
+
 backToMenuBtn.addEventListener("click", () => blitScreen(startScreen));
+aboutClick.addEventListener("click", () => {blitScreen(mathsonmyfootScreen); document.querySelector("header").style.display = "none";});
+scodeBtn.addEventListener("click", () => {window.open('https://github.com/MathsOnMyFoot/mathsonmyfoot.github.io', '_blank');});
+reportBtn.addEventListener("click", () => {
+    const email = "rachakondaruchira@gmail.com";
+    const subject = encodeURIComponent("Found a bug on #MathsOnMyFoot!");
+    const body = encodeURIComponent("Hey, I found a bug on MathsOnMyFoot. Here's the details:\n\n[Please describe the bug here]\n\nThanks!");
+  
+    // Combine using standard URL query parameters (? and &)
+    window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
+});
+changeLogBtn.addEventListener("click", () => {window.open('https://github.com/MathsOnMyFoot/mathsonmyfoot.github.io/blob/main/CHANGELOG.md', '_blank');});
+creditsBtn.addEventListener("click", () => {modalBox.showModal();});
+modalBox.addEventListener('click', (e) => {
+  if (e.target === modalBox) {
+    modalBox.close();
+  }
+});
 
 
 
@@ -385,6 +402,7 @@ export function handleTabViolation() {
 
 
 function runGameInit() {
+    document.querySelector("header").style.display = "none"; // HIDE THE HEADER
     isGameActive = true;
     blitScreen(gameScreen);
     score = 0;
@@ -650,48 +668,155 @@ function updateTimerUI(maxLimit) {
 async function gameOver() {
     gameover.play();
     isGameActive = false;
+    document.querySelector("header").style.display = "block";
     blitScreen(leaderboardScreen);
     finalScore.innerText = score;
 
     if (currentUser) {
         try {
-            // Point directly to the gamesPlayed counter inside the leaderboard path
+            const mainRecordRef = ref(db, `leaderboard/${currentUser.uid}`);   // Main leaderboard path
+            const dailyRecordRef = ref(db, `daily/${currentUser.uid}`);        // Daily leaderboard path
+            
+            // gamesPlayed badhaaoo bc
             const gamesPlayedRef = ref(db, `leaderboard/${currentUser.uid}/gamesPlayed`);
             await runTransaction(gamesPlayedRef, (currentValue) => {
                 return (currentValue || 0) + 1;
             });
-            console.log("Games played counter incremented in leaderboard path.");
 
-            // Fetch current personal high score from the same leaderboard path
-            const personalRecordRef = ref(db, `leaderboard/${currentUser.uid}`);
-            const snapshot = await get(personalRecordRef);
+            // Snap for both main and daily records
+            const [mainSnap, dailySnap] = await Promise.all([
+                get(mainRecordRef),
+                get(dailyRecordRef)
+            ]);
 
-            let shouldUpdate = true;
-            let existingScore = 0;
+            const updates = {};
 
-            if (snapshot.exists() && snapshot.val().score !== undefined) {
-                existingScore = snapshot.val().score;
-                if (score <= existingScore) {
-                    shouldUpdate = false;
-                    console.log(`Skipped leaderboard score update: Score (${score}) did not beat record (${existingScore}).`);
+            // --- Get cleanName straight from the main /leaderboard/uid/name ---
+            let cleanName = "Player";
+            if (mainSnap.exists() && mainSnap.val().name) {
+                cleanName = mainSnap.val().name;
+            } else if (currentUser.displayName) {
+                // Safe fallback just in case their main node name field is somehow missing
+                cleanName = currentUser.displayName;
+            }
+
+            // --- All-Time Main Leaderboard Logic ---
+            let existingMainScore = 0;
+            if (mainSnap.exists() && mainSnap.val().score !== undefined) {
+                existingMainScore = mainSnap.val().score;
+            }
+            
+            if (score > existingMainScore) {
+                updates[`leaderboard/${currentUser.uid}/score`] = score;
+                updates[`leaderboard/${currentUser.uid}/timestamp`] = Date.now();
+                console.log("New All-Time High Score!!");
+            }
+
+            // --- On-Demand Daily Leaderboard Logic ---
+            if (!dailySnap.exists()) {
+                // First game of the day! Initialize the node with this first score
+                updates[`daily/${currentUser.uid}`] = {
+                    uid: currentUser.uid,
+                    name: cleanName,
+                    score: score,
+                    timestamp: Date.now()
+                };
+                console.log("First daily game! Initialized daily record with score:", score);
+            } else {
+                // Daily node exists, check if we beat today's high score
+                const existingDailyScore = dailySnap.val().score || 0;
+                if (score > existingDailyScore) {
+                    updates[`daily/${currentUser.uid}/score`] = score;
+                    updates[`daily/${currentUser.uid}/timestamp`] = Date.now();
+                    console.log("New Daily High Score!");
                 }
             }
 
-            //Update the leaderboard fields if they got a new high score
-            if (shouldUpdate) {
-                await update(personalRecordRef, {
-                    uid: currentUser.uid,
-                    score: score,
-                    timestamp: Date.now()
-                });
-                console.log(`Leaderboard updated! New high score of ${score} for ${safeName}.`);
+            if (Object.keys(updates).length > 0) {
+                await update(ref(db), updates);
             }
+
         } catch (error) {
-            alert("Critical Error saving game stats or score to Database:", error.message);
+            console.error("Critical Error saving game stats:", error);
         }
     }
-    fetchLeaderboard(gameoverLeaderboardList, leaderboardScreen);
+
+    // This is for GAME OVER LEADERBOARD.. ** DO NOT CONFUSE MOTHER FUCKER
+    fetchDailyLeaderboard(gameoverLeaderboardList, leaderboardScreen);
+    dailyTabBtn[1].classList.add('led-active'); // DAILY ICON ACTIVE
+    goatTabBtn[1].classList.remove('led-active');
+    dailyTabBtn[1].addEventListener('click', (event) => {
+        // Highlight active tab styles...
+        dailyTabBtn[1].classList.add('led-active');
+        goatTabBtn[1].classList.remove('led-active');
+        leaderboardH1.innerHTML = "🏆 Daily Ace 🏆"
+            
+        // Fetch and display the fresh daily stats
+        fetchDailyLeaderboard(gameoverLeaderboardList, leaderboardScreen);
+    });
+    goatTabBtn[1].addEventListener('click', (event) => {
+        // Highlight active tab styles...
+        goatTabBtn[1].classList.add('led-active');
+        dailyTabBtn[1].classList.remove('led-active');
+
+        leaderboardH1.innerHTML = "🐐 Hall of Fame 🐐"
+
+        congo();
+            
+        // Fetch and display the fresh daily stats
+        fetchLeaderboard(gameoverLeaderboardList, leaderboardScreen);
+    });
+
 }
+
+async function fetchDailyLeaderboard(targetListElement, activeScreenElement) {
+    targetListElement.innerHTML = "<li>Loading daily scores...</li>";
+    
+    try {
+        const dailyLeaderboardRef = ref(db, "daily");
+        const dbQuery = query(
+            dailyLeaderboardRef,
+            orderByChild("score")
+        );
+        const snapshot = await get(dbQuery);
+
+        targetListElement.innerHTML = "";
+
+        if (snapshot.exists()) {
+            const rawData = [];
+            snapshot.forEach((childSnapshot) => {
+                rawData.push(childSnapshot.val());
+            });
+            rawData.reverse();
+
+            let rank = 1;
+            rawData.forEach((entry) => {
+                const li = document.createElement("li");
+
+                const nameSpan = document.createElement("span");
+                nameSpan.className = "leaderboard-name-clickable";
+                nameSpan.innerHTML = `#${rank} <b>${entry.name}</b>`;
+                nameSpan.addEventListener("click", () =>
+                    openUserProfileCard(entry.uid, entry.name, activeScreenElement)
+                );
+
+                const scoreStrong = document.createElement("strong");
+                scoreStrong.innerHTML = `<b>${entry.score}</b>`;
+
+                li.appendChild(nameSpan);
+                li.appendChild(scoreStrong);
+                targetListElement.appendChild(li);
+                rank++;
+            });
+        } else {
+            targetListElement.innerHTML = "<li>No daily scores yet today. Be the first!</li>";
+        }
+    } catch (e) {
+        console.error("Error retrieving daily leaderboard: ", e);
+        targetListElement.innerHTML = "<li>Error loading daily records.</li>";
+    }
+}
+
 
 async function fetchLeaderboard(targetListElement, activeScreenElement) {
     targetListElement.innerHTML = "<li>Loading scores...</li>";

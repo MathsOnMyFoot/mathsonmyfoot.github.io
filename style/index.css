@@ -67,6 +67,10 @@ html {
 body {
     font-family: "Red Hat Display", sans-serif;
     background-color: var(--bg-color);
+    /* background-image: url(../img/bg.png);
+    background-repeat: no-repeat;
+  background-position: center;
+  background-size: cover; */
     color: var(--text-main);
     display: flex;
     justify-content: center;
@@ -84,11 +88,28 @@ body {
     box-shadow: 5px 5px var(--accent);
     border-radius: 10px;
     /* margin: 0 auto */
+    transition: all 1s ease-in-out;
+}
+
+header{
+    background-color: var(--accent);
+    color: var(--card-bg);
+    text-align: center;
+        padding-top: 4px;
+        padding-bottom: 6px;
+    font-family: "Red Hat Mono", monospace;
+    font-size: 0.8rem;
+    cursor: pointer;
+}
+
+header:hover{
+    background-color: var(--accent);
+    text-decoration: underline;
 }
 
 .card {
     width: 100%;
-    padding-top: 30px;
+    padding-top: 20px;
     padding-right: 30px;
     padding-bottom: 50px;
     padding-left: 30px;
@@ -143,7 +164,7 @@ input {
     width: 100%;
     padding: 12px;
     border: 1.7px solid var(--accent);
-    border-radius: 7px;
+    border-radius: 10px;
     background-color: transparent;
     color: var(--text-main);
     font-size: 1rem;
@@ -165,7 +186,7 @@ button {
     border: none;
     border-radius: 8px;
     background-color: var(--accent);
-    color: white;
+    color: var(--bg-color);
     font-family: "Red Hat Display", sans-serif;
     font-size: 1rem;
     font-weight: bold;
@@ -191,6 +212,24 @@ button:hover {
     background-color: transparent;
 }
 
+.btn-tertiary {
+        width: 75%;
+    background-color: transparent;
+    border: 1px solid var(--accent);
+    color: var(--text-muted);
+    transition: all 0.2s ease;
+    box-shadow: 1px 1px var(--accent);
+    padding: 7px 10px;
+    border-radius: 7px;
+    margin-bottom: 15px;
+}
+
+.btn-tertiary:hover {
+    border-color: var(--accent);
+    box-shadow: 3px 3px var(--accent);
+    background-color: transparent;
+}
+
 #view-leaderboard-btn{
         border: none;
     border: 1.5px solid var(--accent);
@@ -202,19 +241,28 @@ button:hover {
 }
 
 .back-btn {
+        display: flex;
     position: absolute;
-    width: 39px;
-    top: 0;
-    left: 0;
-    padding: 6px;
+    width: 30px;
+    justify-content: center;
+    top: -1px;
+    align-items: center;
+    left: 1px;
+    /* margin-top: -1px; */
+    padding: 5px;
+    height: 25px;
+    margin-bottom: 0;
     /* margin-top: 15px; */
-    border-radius: 1px;
+    border-radius: 10px;
     border-color: transparent;
+    /* vertical-align: middle; */
+    background: transparent;
 }
 .back-btn svg {
-    width: 1.6rem;
-    height: 1.6rem;
+    width: 1.3rem;
+    height: 1.3rem;
     vertical-align: middle;
+    color: var(--bg-color);
 }
 #start-btn {
     width: 100px;
@@ -311,12 +359,22 @@ button:hover {
 /* Leaderboard Screen */
 .leaderboard-list {
     text-align: left;
-    margin: 20px 0;
+    margin: 10px 0;
+    margin-bottom: 15px;
     padding: 0;
     list-style: none;
-    max-height: 250px;
+    max-height: 334px;
     overflow-y: auto; 
     padding-right: 5px;
+    padding-bottom: 10px;
+}
+
+#standalone-leaderboard-list{
+    margin-bottom: -20px;
+}
+
+#gameover-leaderboard-list{
+    max-height: 208px;
 }
 
 .leaderboard-list li {
@@ -345,7 +403,33 @@ button:hover {
     color: #f59e0b;
 }
 
-marquee{
+.leaderboard-choose{
+    display: flex;
+    margin-top: 5px;
+}
+
+.led-c-button {
+    margin-right: 5px;
+    margin-left: 5px;
+    padding: 4px 7px;
+    box-shadow: 3px 3px var(--accent);
+    margin-bottom: 0px;
+}
+
+.led-c-button:hover {
+    box-shadow: 5px 5px var(--accent);
+}
+
+.led-active {
+    background-color: var(--accent);
+    color: var(--bg-color);
+}
+.led-active:hover {
+    background-color: var(--accent-hover);
+    box-shadow: 3px 3px var(--accent-hover);
+}
+
+/* marquee{
     margin-top: 30px; 
     display: block; 
     margin-bottom: -20px; 
@@ -355,8 +439,33 @@ marquee{
     color: var(--text-muted);
     border-top: 0.5px solid var(--accent);
     border-bottom: 0.5px solid var(--accent);
+} */
+
+/* Style the modal box itself */
+dialog {
+  position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    border: none;
+    border-radius: 8px;
+    padding: 24px;
+    /* width: 90%; */
+    max-width: 500px;
+    background-color: var(--card-bg);
+    border-radius: 16px;
+    border: 3px solid var(--accent);
+    box-shadow: 5px 5px var(--accent);
+    border-radius: 10px;
+    /* margin: 0 auto */
+    transition: all 1s ease-in-out;
 }
 
+/* Style the dark overlay behind the modal */
+dialog::backdrop {
+  background-color: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px); /* Adds a modern blur effect */
+}
 
 footer{
     background-color: var(--accent);
@@ -364,5 +473,5 @@ footer{
     text-align: center;
         padding-top: 4px;
     font-family: "Red Hat Mono", monospace;
-    font-size: small;
+    font-size: 0.8rem;
 }
